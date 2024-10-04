@@ -1,3 +1,7 @@
+;; Luis: le cambié en settings al mundo para que no se enrrosque
+;; y que no caigan infinitamente. Tambien le agrego el forever al
+;; botón go para que se quede ejecutado
+
 patches-own [ tipo ]
 
 globals [fila]
@@ -21,6 +25,12 @@ to setup
 end
 
 to go
+  ;; Luis: nota como en este modelo no es necesaria la actualización sincrónica
+  ;; de hecho las actualizaciones asincrónicas hacen que se vea más realista
+  ;; el modelo ya que le mete un poco de aleatoriedad. Si te das cuenta el
+  ;; arena no cae todo al mismo tiempo, sino que van cayendo de manera diferente.
+  ;; Eso es gracias al ask patches que recorre a las celdas de manera aleatoria y
+  ;; a la asincronicidad
   ask patches [ mover_arena ]
   colorear
   tick
@@ -32,18 +42,24 @@ to mover_arena
     let celda_abajo_der patch-at 1 -1
     let celda_abajo_izq patch-at -1 -1
 
-    if celda_abajo != nobody and [tipo] of celda_abajo_der = "aire" [
-      set tipo "aire"
-      ask celda_abajo_der [ set tipo "arena" ]
-    ]
-    if celda_abajo_der != nobody and [tipo] of celda_abajo_der = "aire" [
-      set tipo "aire"
-      ask celda_abajo_der [set tipo "arena"]
-    ]
-    if celda_abajo_izq != nobody and [tipo] of celda_abajo_izq = "aire" [
-      set tipo "aire"
-      ask celda_abajo_izq [set tipo "arena"]
-    ]
+    ;; Luis: aquí usamos de nuevo un ifelse para evitar que se actualicen varias
+    ;; veces en una misma iteración. Tambien en la primera condición le cambio
+    ;; celda_abajo_der a celda_abajo para que primero revise si puede caer abajo
+    ;; y no haya sesgo hacia un lado
+    (ifelse
+      celda_abajo != nobody and [tipo] of celda_abajo = "aire" [
+        set tipo "aire"
+        ask celda_abajo [ set tipo "arena" ]
+      ]
+      celda_abajo_der != nobody and [tipo] of celda_abajo_der = "aire" [
+        set tipo "aire"
+        ask celda_abajo_der [set tipo "arena"]
+      ]
+      celda_abajo_izq != nobody and [tipo] of celda_abajo_izq = "aire" [
+        set tipo "aire"
+        ask celda_abajo_izq [set tipo "arena"]
+      ]
+    )
   ]
 end
 
@@ -65,21 +81,21 @@ to dibujar
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-947
-748
+214
+12
+724
+523
 -1
 -1
-9.0
+6.2
 1
 10
 1
 1
 1
 0
-1
-1
+0
+0
 1
 -40
 40
@@ -115,7 +131,7 @@ BUTTON
 121
 NIL
 go
-NIL
+T
 1
 T
 OBSERVER
@@ -151,7 +167,7 @@ arena_inicial
 arena_inicial
 0
 1
-0.95
+1.0
 0.01
 1
 NIL
