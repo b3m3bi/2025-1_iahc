@@ -27,27 +27,37 @@ to go
 
   ;; Aplicar las reglas de Brian's Brain
   ask patches [
-    if estado = 1 [
-      ;; Las células vivas se vuelven moribundas (estado 2)
-      set estado 2
-      set tiempo_muerta 0
-    ]
-    if estado = 2 [
-      ;; Las células moribundas se vuelven muertas (estado 0)
-      set estado 0
-      set tiempo_muerta 1
-    ]
-    if estado = 0 [
-      ;; Las células muertas reviven si tienen exactamente 2 vecinos vivos
-      ifelse vecinos_vivos = 2 [
-        set estado 1
+    ;; Luis: Aquí cambié a un ifelse, para que una celda solo ejecute una expresión
+    ;; que cumple su estado y luego se salga de la esructura sin probar las otras.
+    ;; Como estabas usando varios if y dentro de cada if modificabas el el estado
+    ;; entonces una celda se actualizaba varias veces en una iteraión. Por ejemplo,
+    ;; si mi estado era 1, entonces lo cambiaba a 2 y luego como mi estado ahora es
+    ;; 2 ejecutaba el segundo if entonces cambiaba mi estado a 0 en la misma iteración.
+    ;; Con el ifelse ya te aseguras de que solo se ejecute una expresión y luego
+    ;; se salga sin probar las otras.
+    (ifelse
+      estado = 1 [
+        ;; Las células vivas se vuelven moribundas (estado 2)
+        set estado 2
         set tiempo_muerta 0
       ]
-      [
-        ;; Si no revive, incrementar el tiempo que lleva muerta
-        set tiempo_muerta tiempo_muerta + 1
+      estado = 2 [
+        ;; Las células moribundas se vuelven muertas (estado 0)
+        set estado 0
+        set tiempo_muerta 1
       ]
-    ]
+      estado = 0 [
+        ;; Las células muertas reviven si tienen exactamente 2 vecinos vivos
+        ifelse vecinos_vivos = 2 [
+          set estado 1
+          set tiempo_muerta 0
+        ]
+        [
+          ;; Si no revive, incrementar el tiempo que lleva muerta
+          set tiempo_muerta tiempo_muerta + 1
+        ]
+      ]
+    )
   ]
 
   colorear_celdas
@@ -61,7 +71,7 @@ to colorear_celdas
     if estado = 0 [
       ;; Células muertas se desvanecen de rojo a negro
       ifelse tiempo_muerta > 0 and tiempo_muerta < 3[
-        set pcolor red - (0.2 * tiempo_muerta)
+        set pcolor red - (1.5 * tiempo_muerta) ;; Luis: Aquí solo le cambié para que se vea más el difuninado con el tiempo de difuminación que pones
       ][ set pcolor black ]
     ]
   ]
@@ -80,11 +90,11 @@ end
 GRAPHICS-WINDOW
 210
 10
-647
-448
+723
+524
 -1
 -1
-13.0
+5.0
 1
 10
 1
@@ -94,10 +104,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-50
+50
+-50
+50
 1
 1
 1
@@ -147,7 +157,7 @@ prop_celulas
 prop_celulas
 0
 1
-0.04
+0.03
 0.01
 1
 NIL
