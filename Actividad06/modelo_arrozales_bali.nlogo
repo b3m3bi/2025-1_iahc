@@ -104,26 +104,56 @@ to elegir_siguiente_itinerario
     set I_t1 one-of itinerarios
   ]
 
-  if regla = "mayoría" [
-    let conteo [I_t] of vecinos_cosecha
-    let max_iter (max conteo)
-
-    ;; Encuentra todos los itinerarios con la cantidad máxima
-    let itinerarios_mayoria filter [x -> x = max_iter] conteo
-    if any? itinerarios_mayoria [
-      set I_t1 one-of itinerarios_mayoria
-    ]
+;  if regla = "mayoria" [   ;; <- Luis: aguas con como nombras aquí y en la interfaz, No se estaba ejecutando nada porque en la interfaz lo pusiste sin acento
+;    let conteo [I_t] of vecinos_cosecha ;; <- Luis: esto no te regresa en sí el conteo, te regresa una lista con los itinerarios de los vecinos
+;    let max_iter (max conteo)  ;; <- Luis: esto te retorna el itinerario con un número más alto, no el que tiene un mayor conteo
+;
+;    ;; Encuentra todos los itinerarios con la cantidad máxima
+;    let itinerarios_mayoria filter [x -> x = max_iter] conteo
+;    if any? itinerarios_mayoria [  ;; <- Luis: Esto rompe el código poruqe any? solo funciona con conjuntos de agentes no con listas...
+;      set I_t1 one-of itinerarios_mayoria
+;    ]
+;  ]
+;; Luis: aquí te pongo un forma de implementar la regla de la mayoría:
+  if regla = "mayoria" [
+    ;; obtener los elementos que más se repiten de itinerarios, las modas
+    let cosecha_mayoria modes [I_t] of vecinos_cosecha
+    ;; se selecciona un itinerario de los de la moda al azar
+    set I_t1 one-of cosecha_mayoria
   ]
 
-  if regla = "Minoría" [
-    let conteo [I_t] of vecinos_cosecha
-    let min_iter min conteo
-    let itinerarios_minoria filter [x -> x = min_iter] conteo
 
-    if any? itinerarios_minoria [
-      let candidatos vecinos_cosecha with [I_t != min_iter]
-      set I_t1 one-of [I_t] of candidatos
+;  if regla = "minoria" [ ;; <- Luis: aguas con como nombras aquí y en la interfaz, No se estaba ejecutando nada porque en la interfaz lo pusiste sin acento y con minúscula
+;    let conteo [I_t] of vecinos_cosecha
+;    let min_iter min conteo
+;    let itinerarios_minoria filter [x -> x = min_iter] conteo
+;
+;    if any? itinerarios_minoria [ ;; <- Luis: esto rompe al código porque any? solo funciona con conjuntos de agentes y no con listas...
+;      let candidatos vecinos_cosecha with [I_t != min_iter]
+;      set I_t1 one-of [I_t] of candidatos
+;    ]
+;  ]
+;; Luis: aquí te pongo una forma de implementar la regla de la minoría:
+  if regla = "minoria" [
+    ;; creamos una lista, que va a ser una lista de listas con el itinerario y el conteo
+    ;; se verá algo así: [[0 2][1 0][2 1][3 1]], indicando que hay 2 vecinos con itinerario 0,
+    ;; 1 con itineario 2 y 1 con itinearaio 3 y ninguno con itinerario 1.
+    let itine_conteo []
+    ;; llenar la lista itine con el indice/itinerario y conteo
+    foreach range 4 [
+      i ->
+      set itine_conteo lput (list i (count vecinos_cosecha with [I_t = i])) itine_conteo
     ]
+    ;; obtener una lista de solo los conteos
+    let conteos map [l -> item 1 l ] itine_conteo
+    ;; obtener el mínimo de los conteos
+    let minimo min conteos
+    ;; obtener una sublista de itine con solo los elementos cuyo conteo es igual al mínimo
+    let itine_conteo_minimo filter [l -> (item 1 l) = minimo ] itine_conteo
+    ;; obtener una lista de solo los itinerarios de los mínimos
+    let itine_minimo map [l -> item 0 l ] itine_conteo_minimo
+    ;; se asigna un ininterio mínimo al azar
+    set I_t1 one-of itine_minimo
   ]
 end
 
@@ -199,11 +229,11 @@ end
 GRAPHICS-WINDOW
 210
 10
-318
-119
+534
+335
 -1
 -1
-1.0
+3.16
 1
 10
 1
@@ -266,7 +296,7 @@ a
 a
 0
 0.5
-0.3
+0.5
 0.01
 1
 NIL
@@ -281,7 +311,7 @@ b
 b
 0
 10
-6.0
+9.6
 0.1
 1
 NIL
@@ -295,7 +325,7 @@ CHOOSER
 regla_decision
 regla_decision
 "maximo" "aleatorio" "mayoria" "minoria"
-0
+3
 
 PLOT
 541
