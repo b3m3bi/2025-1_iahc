@@ -43,7 +43,8 @@ to crear-depredador
     set size 2
     set color brown
     set energia random-float 10
-    setxy random-xcor random-ycor
+;    setxy random-xcor random-ycor
+    posicionar_dep
     crear-genotipo ; Aplicar genotipo a depredadores
   ]
 end
@@ -95,12 +96,15 @@ to go
     ask depredadores [ comer-dep ]
 
     ;; Exportar imagen
-    export-view ( word ("img-") (agregar-ceros (word ticks "") 4) (".png"))
+;    export-view ( word ("imgs/img-") (agregar-ceros (word ticks "") 4) (".png"))
     tick
   ]
   ask tortugas [ morirse ]
   ask tortugas [ reproducirse ]
   ask tortugas with [ energia > 0 ] [ die ]
+  ask depredadores [ morirse ]
+  ask depredadores [ reproducirse_dep ]
+  ask depredadores with [ energia > 0 ] [ die ]
 
   set generacion generacion + 1
 
@@ -117,8 +121,34 @@ to moverse-dep
 end
 
 to comer-dep
-  if any? tortugas-here [ask one-of tortugas-here [die]]
+  if any? tortugas-here [ask one-of tortugas-here [die]
+    set energia energia + 1 ;; Luis: les damos energía a los que comen
+  ]
 end
+
+;; Luis: aquí le puse el procedimiento de reproducción sencillo sin entrecruzamiento
+;; lo puse porque como la pobiación es mas pequeña con entrecruzamiento es posible que
+;; falle porque no sobreviven dos padres suficientes para cruzarse
+to reproducirse_dep
+  let max-rep max[energia] of depredadores
+  while [count depredadores with [energia = 0 ] < num-depredador][
+    ask one-of depredadores with [energia != 0 ] [
+     if random-float 1.0 < (energia / max-rep ) [
+       hatch-depredadores 1 [
+         set energia 0
+         posicionar_dep
+         ;mutaciones
+          if random-float  1.0 < tasa-mutaciones [mutar]
+        ]
+      ]
+    ]
+  ]
+end
+
+to posicionar_dep
+  setxy max-pxcor random-ycor
+end
+
 
 to reproducirse
   let max-rep max [ energia ] of tortugas
@@ -317,8 +347,8 @@ GRAPHICS-WINDOW
 16
 -16
 16
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -366,7 +396,7 @@ poblacion
 poblacion
 0
 500
-400.0
+100.0
 10
 1
 NIL
@@ -481,7 +511,7 @@ num-depredador
 num-depredador
 0
 100
-50.0
+20.0
 1
 1
 NIL
@@ -516,6 +546,24 @@ alimento-aleatorio?
 1
 -1000
 
+PLOT
+816
+429
+1016
+579
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mean [energia] of depredadores"
+
 @#$#@#$#@
 ## Implementación de entrecruzamiento en la reproducción 
 
@@ -531,7 +579,6 @@ Implementacion de un control de posición de alimentos para modificar la creacio
 
 Si alimento-aleatorio? es cierto (true), los alimentos se posicionarán de manera aleatoria.
 Si alimento-aleatorio? es falso (false), los alimentos se colocarán en una posición específica.
-
 @#$#@#$#@
 default
 true
